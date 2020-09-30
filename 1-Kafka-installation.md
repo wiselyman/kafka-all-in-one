@@ -177,7 +177,7 @@ Strimzi不支持安装schema registry和KsqlDB，所以我们通过下载https:/
 
 ## 7. 安装KsqlDB
 
-- 修改ksqldb的外部Connect连接设置，`cp-ksql-server/templates/deployment.yaml`,添加变量：
+- 修改ksqldb的外部Connect连接设置，`cp-ksql-server/templates/deployment.yaml`，添加变量，这样KsqlDB就能使用外部的Kafka Connect集群了：
 
   ```yaml 
             env:
