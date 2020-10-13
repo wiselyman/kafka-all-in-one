@@ -4,9 +4,9 @@
 
 - 下载文件
 
-  https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/crds.yaml
+  [https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/crds.yaml](https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/crds.yaml)
 
-  https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/olm.yaml
+  [https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/olm.yaml](https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.16.1/olm.yaml)
 
 - 安装
 
@@ -17,7 +17,7 @@
 
 ## 2. 安装Strimzi Apache Kafka Operator
 
-- 下载文件：https://operatorhub.io/install/strimzi-kafka-operator.yaml
+- 下载文件：[https://operatorhub.io/install/strimzi-kafka-operator.yaml](https://operatorhub.io/install/strimzi-kafka-operator.yaml)
 
 - 安装命令
 
@@ -41,7 +41,7 @@
 
 ## 3. 安装Kafka集群
 
-- 下载https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.19.0/examples/kafka/kafka-persistent.yaml
+- 下载[https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.19.0/examples/kafka/kafka-persistent.yaml](https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.19.0/examples/kafka/kafka-persistent.yaml)
 
 - 编辑如下
 
@@ -100,17 +100,17 @@
 
 ## 4. 准备Helm Charts
 
-Strimzi不支持安装schema registry和KsqlDB，所以我们通过下载https://github.com/confluentinc/cp-helm-charts来安装。在其`charts`目录下的`cp-schema-registry`和`cp-ksql-server`即我们所需要的Helm Charts。
+- 安装helm：https://helm.sh/docs/intro/install/
+
+Strimzi不支持安装schema registry和KsqlDB，所以我们通过下载[https://github.com/confluentinc/cp-helm-charts](https://github.com/confluentinc/cp-helm-charts)来安装。在其`charts`目录下的`cp-schema-registry`和`cp-ksql-server`即我们所需要的Helm Charts。
 
 ## 5. 安装Schema Registry
 
-- 安装
+在`cp-schema-registry`目录下，执行：
 
-  在`cp-schema-registry`目录下，执行：
-
-  ```shell
-  helm install my-cluster-kafka-schema-registry --set kafka.bootstrapServers="PLAINTEXT://my-cluster-kafka-bootstrap:9092" . -n kafka
-  ```
+```shell
+helm install my-cluster-kafka-schema-registry --set kafka.bootstrapServers="PLAINTEXT://my-cluster-kafka-bootstrap:9092" . -n kafka
+```
 
 - 查看是否安装成功
 
@@ -122,7 +122,7 @@ Strimzi不支持安装schema registry和KsqlDB，所以我们通过下载https:/
 
 ## 6. 安装Kafka Connect
 
-- 下载文件https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.19.0/examples/connect/kafka-connect.yaml，修改编写如下
+- 下载文件[https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.19.0/examples/connect/kafka-connect.yaml](https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/0.19.0/examples/connect/kafka-connect.yaml)，修改编写如下
 
   ```yaml
   apiVersion: kafka.strimzi.io/v1beta1
@@ -149,13 +149,13 @@ Strimzi不支持安装schema registry和KsqlDB，所以我们通过下载https:/
       config.storage.topic: connect-cluster-configs
       status.storage.topic: connect-cluster-status
       schema.registry.url: http://my-cluster-kafka-schema-registry-cp-schema-registry:8081
-      key.converter: io.confluent.connect.avro.AvroConverter
-      key.converter.schema.registry.url: http://my-cluster-kafka-schema-registry-cp-schema-registry:8081
+      key.converter: org.apache.kafka.connect.storage.StringConverter
       value.converter: io.confluent.connect.avro.AvroConverter
       value.converter.schema.registry.url: http://my-cluster-kafka-schema-registry-cp-schema-registry:8081
   ```
-
-  > `registry.cn-shanghai.aliyuncs.com/wiselyman/kafka-connect-mysql-es:0.19.0-kafka-2.5.0`源码位于https://github.com/wiselyman/docker-images/tree/master/kafka-connect/0.19.0-kafka-2.5.0/mysql-es，本镜像集成了Debezium Mysq Connector和Elasticsearch Connector和Kafka Connect Avro Converter，定制镜像请参考https://github.com/wiselyman/kafka-in-battle#521-%E5%87%86%E5%A4%87kafka-connect%E9%95%9C%E5%83%8F
+  - `registry.cn-shanghai.aliyuncs.com/wiselyman/kafka-connect-mysql-es:0.19.0-kafka-2.5.0`源码位于[https://github.com/wiselyman/docker-images/tree/master/kafka-connect/0.19.0-kafka-2.5.0/mysql-es](https://github.com/wiselyman/docker-images/tree/master/kafka-connect/0.19.0-kafka-2.5.0/mysql-es)
+  - 本镜像集成了Debezium Mysq Connector和Elasticsearch Connector和Kafka Connect Avro Converter
+  - 定制镜像请参考[https://github.com/wiselyman/kafka-in-battle#521-%E5%87%86%E5%A4%87kafka-connect%E9%95%9C%E5%83%8F](https://github.com/wiselyman/kafka-in-battle#521-%E5%87%86%E5%A4%87kafka-connect%E9%95%9C%E5%83%8F)
 
 - 安装
 
@@ -169,7 +169,7 @@ Strimzi不支持安装schema registry和KsqlDB，所以我们通过下载https:/
   kubectl port-forward service/my-connect-cluster-connect-api 8083:8083 -n kafka
   ```
 
-- 查看已安装的Connectors，使用Get访问http://localhost:8083/connector-plugins：
+- 查看已安装的Connectors，使用Get访问[http://localhost:8083/connector-plugins](http://localhost:8083/connector-plugins)：
 
   <img src="images/image-20200929115705630.png" alt="image-20200929115705630" style="zoom:50%;" />
 
@@ -200,6 +200,8 @@ Strimzi不支持安装schema registry和KsqlDB，所以我们通过下载https:/
   ```shell
   helm install ksql-server --set cp-schema-registry.url="http://my-cluster-kafka-schema-registry-cp-schema-registry:8081",kafka.bootstrapServers="PLAINTEXT://my-cluster-kafka-bootstrap:9092",connectUrl="http://my-connect-cluster-connect-api:8083",ksql.headless=false . -n kafka
   ```
+
+  `ksql.headless`开发调试使用`false`，生产使用`true`（默认为true，去掉此设置即可）。
 
 - KsqlDB客户端
 
