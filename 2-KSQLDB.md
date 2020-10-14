@@ -157,8 +157,6 @@
 
 ### 1.3 ElasticSearch安装
 
-#### 1.3.1 安装
-
 - 安装helm：https://helm.sh/docs/intro/install/
 
 - 添加**腾讯云**应用仓库
@@ -171,15 +169,17 @@
 - 配置ES
 
   ```yaml
-    image: "registry.cn-shanghai.aliyuncs.com/wiselyman/elasticsearch-chinese"
-    imageTag: "7.6.2"
-    volumeClaimTemplate:
-      storageClassName: "fast"
-    service:
-      type: NodePort
+  image: "registry.cn-shanghai.aliyuncs.com/wiselyman/elasticsearch-chinese"
+  imageTag: "7.6.2"
+  imagePullPolicy: "Always"
+  volumeClaimTemplate:
+    storageClassName: "fast"
+  service:
+    type: NodePort
+  replicas: 1
   ```
 
-  此处为定制的elasticsearch镜像，安装了中文分词和拼音分词插件，源码：[https://github.com/wiselyman/docker-images/blob/master/elasticsearch/7.6.2/Dockerfile](https://github.com/wiselyman/docker-images/blob/master/elasticsearch/7.6.2/Dockerfile)。
+  此处为定制的elasticsearch镜像，安装了中文分词、拼音分词、简繁体转换插件，源码：[https://github.com/wiselyman/docker-images/blob/master/elasticsearch/7.6.2/Dockerfile](https://github.com/wiselyman/docker-images/blob/master/elasticsearch/7.6.2/Dockerfile)。
 
 - 安装
 
@@ -195,97 +195,7 @@
 
   ![image-20201012145521083](images/image-20201012145521083.png)
 
-#### 1.3.2 拼音分词
 
-- 创建拼音分词器
-
-  向端点[http://localhost:9200/medcl/](http://localhost:9200/medcl/)，发送PUT请求：
-
-  ```json
-  {
-      "settings" : {
-          "analysis" : {
-              "analyzer" : {
-                  "pinyin_analyzer" : {
-                      "tokenizer" : "my_pinyin"
-                      }
-              },
-              "tokenizer" : {
-                  "my_pinyin" : {
-                      "type" : "pinyin",
-                      "keep_separate_first_letter" : false,
-                      "keep_full_pinyin" : true,
-                      "keep_original" : true,
-                      "limit_first_letter_length" : 16,
-                      "lowercase" : true,
-                      "remove_duplicated_term" : true
-                  }
-              }
-          }
-      }
-  }
-  ```
-
-  ![image-20201012152511255](images/image-20201012152511255.png)
-
-- 测试拼音分词器
-
-  向端点[http://localhost:9200/medcl/_analyze](http://localhost:9200/medcl/_analyze)，发送GET请求：
-
-  ```json
-  {
-    "text": ["胡桃色"],
-    "analyzer": "pinyin_analyzer"
-  }
-  ```
-
-  ![image-20201012152823241](images/image-20201012152823241.png)
-
-  分词解析的结果如下：
-
-  ```json
-  {
-      "tokens": [
-          {
-              "token": "hu",
-              "start_offset": 0,
-              "end_offset": 0,
-              "type": "word",
-              "position": 0
-          },
-          {
-              "token": "胡桃色",
-              "start_offset": 0,
-              "end_offset": 0,
-              "type": "word",
-              "position": 0
-          },
-          {
-              "token": "hts",
-              "start_offset": 0,
-              "end_offset": 0,
-              "type": "word",
-              "position": 0
-          },
-          {
-              "token": "tao",
-              "start_offset": 0,
-              "end_offset": 0,
-              "type": "word",
-              "position": 1
-          },
-          {
-              "token": "se",
-              "start_offset": 0,
-              "end_offset": 0,
-              "type": "word",
-              "position": 2
-          }
-      ]
-  }
-  ```
-
-  
 
 ## 2. 数据ETL
 
@@ -538,33 +448,70 @@ CREATE SOURCE CONNECTOR `product-info-ext-source` WITH(
     "number_of_shards": 1,
     "number_of_replicas": 0,
     "analysis": {
-      "analyzer": {
-        "pinyin_analyzer": {
-          "tokenizer": "my_pinyin"
+      "char_filter": {
+        "t2s_char_convert": {
+          "type": "stconvert",
+          "convert_type": "t2s"
         }
       },
-      "tokenizer": {
-        "my_pinyin": {
+      "filter": {
+        "pinyin_filter": {
           "type": "pinyin",
+          "keep_first_letter": false,
           "keep_separate_first_letter": false,
-          "keep_full_pinyin": true,
-          "keep_original": true,
-          "limit_first_letter_length": 16,
-          "lowercase": true,
-          "remove_duplicated_term": true
+          "keep_full_pinyin": false,
+          "keep_joined_full_pinyin": true,
+          "keep_none_chinese": true,
+          "keep_none_chinese_together": true,
+          "keep_none_chinese_in_first_letter": true,
+          "keep_none_chinese_in_joined_full_pinyin": true,
+          "none_chinese_pinyin_tokenize": false,
+          "lowercase": true
+        }
+      },
+      "analyzer": {
+        "es_ik_analyzer": {
+          "type": "custom",
+          "char_filter": [
+            "t2s_char_convert"
+          ],
+          "tokenizer": "ik_smart",
+          "filter": [
+            "lowercase",
+            "stemmer"
+          ]
+        },
+        "es_pinyin_analyzer": {
+          "type": "custom",
+          "char_filter": [
+            "t2s_char_convert"
+          ],
+          "tokenizer": "ik_smart",
+          "filter": [
+            "lowercase",
+            "pinyin_filter"
+          ]
         }
       }
     }
-
   },
   "mappings": {
       "dynamic_templates": [
         {"productName": {
+            "match_mapping_type": "string",
             "match": "PRODUCTNAME",
             "mapping": {
               "type": "text",
-              "search_analyzer": "pinyin_analyzer",
-              "analyzer": "pinyin_analyzer"
+              "fields": {
+                "ik": {
+                  "type": "text",
+                  "analyzer": "es_ik_analyzer"
+                },
+                "pinyin": {
+                  "type": "text",
+                  "analyzer": "es_pinyin_analyzer"
+                }
+              }
             }
           }
         },
@@ -573,17 +520,27 @@ CREATE SOURCE CONNECTOR `product-info-ext-source` WITH(
             "match": "PROPERTYTEXT*",
             "mapping": {
               "type": "text",
-              "search_analyzer": "pinyin_analyzer",
-              "analyzer": "pinyin_analyzer"
+              "fields": {
+                "ik": {
+                  "type": "text",
+                  "analyzer": "es_ik_analyzer"
+                },
+                "pinyin": {
+                  "type": "text",
+                  "analyzer": "es_pinyin_analyzer"
+                }
+              }
             }
           }
         }
       ]
+
   }
 }
+
 ```
 
-![image-20201012163139873](images/image-20201012163139873.png)
+![image-20201014092028868](images/image-20201014092028868.png)
 
 #### 2.3.2 导出到ES的Connector
 
@@ -600,13 +557,13 @@ CREATE SINK CONNECTOR `product-sink` WITH (
 
 #### 2.3.3 Elasticsearch中的结果
 
-- Elasticsearch中的数据，使用GET请求访问[http://localhost:9200/product/_search?size=1000&q=*:*](http://localhost:9200/product/_search?size=1000&q=*:*)
+- Elasticsearch中的数据，使用GET请求访问`http://localhost:9200/product/_search?size=1000&q=*:*`
 
   ![image-20201013095144890](images/image-20201013095144890.png)
 
 - 根据动态映射模版生成的索引schema，使用GET请求访问[http://localhost:9200/product/_mapping](http://localhost:9200/product/_mapping)
 
-  ![image-20201013095511044](images/image-20201013095511044.png)
+  ![image-20201014092253916](images/image-20201014092253916.png)
 
   
 
