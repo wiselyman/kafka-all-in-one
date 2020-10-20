@@ -1,5 +1,9 @@
 在Strimzi提供的监控方案主要有**Prometheus JMX Exporter**和**Strimzi Kafka Exporter**，使用Prometheus将这些指标数据（metrics）读取，然后通过Grafana将Prometheus作为数据源展示出来作为监控。
 
+- 本例需在[Kafka全家桶安装](1-Kafka-installation.md)之后进行。
+
+- Strimizi源码可在此页面选择最新版本下载：https://strimzi.io/downloads/，Strimizi源码本例0.19.0版本下载地址：https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.19.0/strimzi-0.19.0.zip
+
 ## 1.Prometheus JMX Exporter
 
 ### 1.1 更新部署Kafka集群
